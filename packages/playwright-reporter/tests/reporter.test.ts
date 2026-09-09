@@ -21,6 +21,11 @@ function makeTest(options: {
   };
 }
 
+function makeFileTest(title: string, file: string): any {
+  const fileSuite = { type: "file", title: file, parent: undefined };
+  return makeTest({ title, file, parent: fileSuite });
+}
+
 function makeResult(options: {
   status: string;
   duration: number;
@@ -94,8 +99,7 @@ describe("TestOpsReporter result collection and reporting", () => {
 
   it("posts a batch of results to the run ingestion endpoint", async () => {
     const reporter = makeReporter();
-    const fileSuite = { type: "file", title: "login.spec.ts", parent: undefined };
-    const test = makeTest({ title: "logs in", file: "tests/login.spec.ts", parent: fileSuite });
+    const test = makeFileTest("logs in", "tests/login.spec.ts");
 
     reporter.onTestEnd(test, makeResult({ status: "passed", duration: 123.6 }));
     await reporter.onEnd({ status: "passed" } as any);
@@ -118,7 +122,25 @@ describe("TestOpsReporter result collection and reporting", () => {
           error_message: null,
         },
       ],
+      run_metadata: null,
     });
+  });
+
+  it("includes run_metadata when provided", async () => {
+    const reporter = new TestOpsReporter({
+      baseUrl: "http://localhost:8000",
+      projectId: "project-1",
+      apiToken: "tth_test-token",
+      runMetadata: { ci: "github-actions", commit: "abc123" },
+    });
+    reporter.onBegin({ rootDir: ROOT_DIR } as any, {} as any);
+    const test = makeFileTest("t", "tests/a.spec.ts");
+
+    reporter.onTestEnd(test, makeResult({ status: "passed", duration: 1 }));
+    await reporter.onEnd({ status: "passed" } as any);
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body.run_metadata).toEqual({ ci: "github-actions", commit: "abc123" });
   });
 
   it("joins nested describe titles into the test title", async () => {
@@ -146,8 +168,7 @@ describe("TestOpsReporter result collection and reporting", () => {
     ["skipped", "skipped"],
   ])("maps Playwright status %s to %s", async (playwrightStatus, expected) => {
     const reporter = makeReporter();
-    const fileSuite = { type: "file", title: "a.spec.ts", parent: undefined };
-    const test = makeTest({ title: "t", file: "tests/a.spec.ts", parent: fileSuite });
+    const test = makeFileTest("t", "tests/a.spec.ts");
 
     reporter.onTestEnd(test, makeResult({ status: playwrightStatus, duration: 1 }));
     await reporter.onEnd({ status: "passed" } as any);
@@ -158,8 +179,7 @@ describe("TestOpsReporter result collection and reporting", () => {
 
   it("captures the error message when a test fails", async () => {
     const reporter = makeReporter();
-    const fileSuite = { type: "file", title: "a.spec.ts", parent: undefined };
-    const test = makeTest({ title: "fails", file: "tests/a.spec.ts", parent: fileSuite });
+    const test = makeFileTest("fails", "tests/a.spec.ts");
 
     reporter.onTestEnd(
       test,
@@ -177,8 +197,7 @@ describe("TestOpsReporter result collection and reporting", () => {
 
   it("strips ANSI color codes from error messages", async () => {
     const reporter = makeReporter();
-    const fileSuite = { type: "file", title: "a.spec.ts", parent: undefined };
-    const test = makeTest({ title: "fails", file: "tests/a.spec.ts", parent: fileSuite });
+    const test = makeFileTest("fails", "tests/a.spec.ts");
 
     reporter.onTestEnd(
       test,
@@ -209,8 +228,7 @@ describe("TestOpsReporter result collection and reporting", () => {
     });
 
     const reporter = makeReporter();
-    const fileSuite = { type: "file", title: "a.spec.ts", parent: undefined };
-    const test = makeTest({ title: "t", file: "tests/a.spec.ts", parent: fileSuite });
+    const test = makeFileTest("t", "tests/a.spec.ts");
     reporter.onTestEnd(test, makeResult({ status: "passed", duration: 1 }));
 
     await expect(reporter.onEnd({ status: "passed" } as any)).rejects.toThrow(
@@ -222,8 +240,7 @@ describe("TestOpsReporter result collection and reporting", () => {
     fetchMock.mockRejectedValue(new Error("ECONNREFUSED"));
 
     const reporter = makeReporter();
-    const fileSuite = { type: "file", title: "a.spec.ts", parent: undefined };
-    const test = makeTest({ title: "t", file: "tests/a.spec.ts", parent: fileSuite });
+    const test = makeFileTest("t", "tests/a.spec.ts");
     reporter.onTestEnd(test, makeResult({ status: "passed", duration: 1 }));
 
     await expect(reporter.onEnd({ status: "passed" } as any)).rejects.toThrow(/failed to reach.*ECONNREFUSED/s);

@@ -5,6 +5,8 @@ export interface TestOpsReporterOptions {
   projectId?: string;
   /** Project-scoped API token. Falls back to TESTOPS_API_TOKEN. */
   apiToken?: string;
+  /** Arbitrary metadata attached to the run (e.g. CI build info), per the ingestion contract. */
+  runMetadata?: Record<string, unknown>;
 }
 
 export type ResultStatus = "passed" | "failed" | "skipped";

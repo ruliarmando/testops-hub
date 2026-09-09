@@ -25,6 +25,7 @@ export class TestOpsReporter implements Reporter {
   private readonly baseUrl: string;
   private readonly projectId: string;
   private readonly apiToken: string;
+  private readonly runMetadata?: Record<string, unknown>;
   private rootDir = "";
   private readonly results: ResultPayload[] = [];
 
@@ -44,6 +45,7 @@ export class TestOpsReporter implements Reporter {
     this.baseUrl = baseUrl.replace(/\/+$/, "");
     this.projectId = projectId;
     this.apiToken = apiToken;
+    this.runMetadata = options.runMetadata;
   }
 
   onBegin(config: FullConfig, _suite: Suite): void {
@@ -74,7 +76,7 @@ export class TestOpsReporter implements Reporter {
           "Content-Type": "application/json",
           Authorization: `Bearer ${this.apiToken}`,
         },
-        body: JSON.stringify({ results: this.results }),
+        body: JSON.stringify({ results: this.results, run_metadata: this.runMetadata ?? null }),
       });
     } catch (cause) {
       throw new Error(

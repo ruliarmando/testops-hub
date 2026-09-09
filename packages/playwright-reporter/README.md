@@ -20,6 +20,8 @@ export default defineConfig({
         baseUrl: "http://localhost:8000",
         projectId: "<your-project-id>",
         apiToken: "<your-project-api-token>",
+        // optional: attached to the run as-is, per the ingestion contract's run_metadata field
+        runMetadata: { ci: "github-actions", commit: process.env.GITHUB_SHA },
       },
     ],
   ],
@@ -60,7 +62,8 @@ For every test, `onTestEnd` records:
 - `test_title` — the test's title, prefixed with any enclosing `describe` titles (`"describe > test"`)
 - `status` — `passed` / `failed` / `skipped` (`timedOut` and `interrupted` map to `failed`)
 - `duration_ms`
-- `error_message` — the first error's message, ANSI color codes stripped, or `null`
+- `error_message` — all of the test's error messages, ANSI color codes stripped and joined with
+  newlines, or `null` if it had none
 
 `onEnd` batches all of the above into one `POST` to `{baseUrl}/projects/{projectId}/runs`. If the
 request fails — invalid/missing token, unreachable server, non-2xx response — the reporter throws,
