@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import get_owned_project
 from app.auth.project_token import generate_project_token, hash_project_token
 from app.auth.users import current_active_user
 from app.db.session import get_db
@@ -18,13 +19,6 @@ from app.schemas.project import (
 )
 
 router = APIRouter(prefix="/projects", tags=["projects"])
-
-
-async def _get_owned_project(project_id: uuid.UUID, user: User, db: AsyncSession) -> Project:
-    project = await db.get(Project, project_id)
-    if project is None or project.owner_id != user.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PROJECT_NOT_FOUND")
-    return project
 
 
 @router.post("", response_model=ProjectRead, status_code=status.HTTP_201_CREATED)
@@ -55,7 +49,7 @@ async def read_project(
     user: User = Depends(current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> Project:
-    return await _get_owned_project(project_id, user, db)
+    return await get_owned_project(project_id, user, db)
 
 
 @router.patch("/{project_id}", response_model=ProjectRead)
@@ -65,7 +59,7 @@ async def update_project(
     user: User = Depends(current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> Project:
-    project = await _get_owned_project(project_id, user, db)
+    project = await get_owned_project(project_id, user, db)
     project.name = body.name
     await db.commit()
     await db.refresh(project)
@@ -78,7 +72,7 @@ async def delete_project(
     user: User = Depends(current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    project = await _get_owned_project(project_id, user, db)
+    project = await get_owned_project(project_id, user, db)
     await db.delete(project)
     await db.commit()
 
@@ -89,7 +83,7 @@ async def create_project_token(
     user: User = Depends(current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> ProjectTokenCreate:
-    project = await _get_owned_project(project_id, user, db)
+    project = await get_owned_project(project_id, user, db)
     raw_token = generate_project_token()
     project.token_hash = hash_project_token(raw_token)
     project.token_last4 = raw_token[-4:]
@@ -103,7 +97,7 @@ async def read_project_token(
     user: User = Depends(current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> ProjectTokenRead:
-    project = await _get_owned_project(project_id, user, db)
+    project = await get_owned_project(project_id, user, db)
     if project.token_last4 is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="PROJECT_TOKEN_NOT_FOUND"

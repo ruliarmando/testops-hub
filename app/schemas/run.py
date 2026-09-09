@@ -37,6 +37,16 @@ class TestResultRead(BaseModel):
     error_message: str | None
 
 
+class TestRunSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    project_id: uuid.UUID
+    created_at: datetime.datetime
+    run_metadata: dict[str, Any] | None
+    pass_rate: float | None
+
+
 class TestRunRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -45,3 +55,20 @@ class TestRunRead(BaseModel):
     created_at: datetime.datetime
     run_metadata: dict[str, Any] | None
     results: list[TestResultRead]
+    pass_rate: float | None
+
+
+class TestSuiteRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    project_id: uuid.UUID
+    file_path: str
+
+
+class TestCaseRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    suite_id: uuid.UUID
+    test_title: str
