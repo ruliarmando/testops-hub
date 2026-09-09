@@ -17,3 +17,4 @@ class TestCase(Base):
         GUID, ForeignKey("test_suite.id", ondelete="CASCADE"), index=True
     )
     test_title: Mapped[str] = mapped_column(String(length=500))
+    display_name: Mapped[str | None] = mapped_column(String(length=500), nullable=True)

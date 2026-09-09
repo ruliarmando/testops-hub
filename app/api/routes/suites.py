@@ -10,7 +10,7 @@ from app.db.session import get_db
 from app.models.test_case import TestCase
 from app.models.test_suite import TestSuite
 from app.models.user import User
-from app.schemas.run import TestCaseRead, TestSuiteRead
+from app.schemas.run import TestCaseRead, TestCaseUpdate, TestSuiteRead
 
 router = APIRouter(prefix="/projects/{project_id}/suites", tags=["suites"])
 
@@ -40,3 +40,27 @@ async def list_cases(
 
     result = await db.execute(select(TestCase).where(TestCase.suite_id == suite_id))
     return list(result.scalars().all())
+
+
+@router.patch("/{suite_id}/cases/{case_id}", response_model=TestCaseRead)
+async def update_case(
+    project_id: uuid.UUID,
+    suite_id: uuid.UUID,
+    case_id: uuid.UUID,
+    body: TestCaseUpdate,
+    user: User = Depends(current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> TestCase:
+    await get_owned_project(project_id, user, db)
+    suite = await db.get(TestSuite, suite_id)
+    if suite is None or suite.project_id != project_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="TEST_SUITE_NOT_FOUND")
+
+    case = await db.get(TestCase, case_id)
+    if case is None or case.suite_id != suite_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="TEST_CASE_NOT_FOUND")
+
+    case.display_name = body.display_name
+    await db.commit()
+    await db.refresh(case)
+    return case

@@ -72,3 +72,14 @@ class TestCaseRead(BaseModel):
     id: uuid.UUID
     suite_id: uuid.UUID
     test_title: str
+    display_name: str | None
+
+
+class TestCaseCreate(BaseModel):
+    file_path: str
+    test_title: str
+    display_name: str | None = None
+
+
+class TestCaseUpdate(BaseModel):
+    display_name: str | None
