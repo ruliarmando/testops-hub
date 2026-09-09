@@ -17,3 +17,11 @@ class ProjectRead(BaseModel):
     id: uuid.UUID
     name: str
     owner_id: uuid.UUID
+
+
+class ProjectTokenCreate(BaseModel):
+    token: str
+
+
+class ProjectTokenRead(BaseModel):
+    masked_token: str

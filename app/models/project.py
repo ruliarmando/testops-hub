@@ -16,3 +16,5 @@ class Project(Base):
     owner_id: Mapped[uuid.UUID] = mapped_column(
         GUID, ForeignKey("user.id", ondelete="CASCADE"), index=True
     )
+    token_hash: Mapped[str | None] = mapped_column(String(length=64), nullable=True)
+    token_last4: Mapped[str | None] = mapped_column(String(length=4), nullable=True)

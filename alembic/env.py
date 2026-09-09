@@ -9,6 +9,10 @@ from alembic import context
 from app.core.config import get_settings
 from app.db.base import Base
 from app.models.project import Project  # noqa: F401  (registers table with Base.metadata)
+from app.models.test_case import TestCase  # noqa: F401  (registers table with Base.metadata)
+from app.models.test_result import TestResult  # noqa: F401  (registers table with Base.metadata)
+from app.models.test_run import TestRun  # noqa: F401  (registers table with Base.metadata)
+from app.models.test_suite import TestSuite  # noqa: F401  (registers table with Base.metadata)
 from app.models.user import User  # noqa: F401  (registers table with Base.metadata)
 
 # this is the Alembic Config object, which provides

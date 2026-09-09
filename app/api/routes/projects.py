@@ -4,11 +4,18 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth.project_token import generate_project_token, hash_project_token
 from app.auth.users import current_active_user
 from app.db.session import get_db
 from app.models.project import Project
 from app.models.user import User
-from app.schemas.project import ProjectCreate, ProjectRead, ProjectUpdate
+from app.schemas.project import (
+    ProjectCreate,
+    ProjectRead,
+    ProjectTokenCreate,
+    ProjectTokenRead,
+    ProjectUpdate,
+)
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -74,3 +81,31 @@ async def delete_project(
     project = await _get_owned_project(project_id, user, db)
     await db.delete(project)
     await db.commit()
+
+
+@router.post("/{project_id}/token", response_model=ProjectTokenCreate)
+async def create_project_token(
+    project_id: uuid.UUID,
+    user: User = Depends(current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> ProjectTokenCreate:
+    project = await _get_owned_project(project_id, user, db)
+    raw_token = generate_project_token()
+    project.token_hash = hash_project_token(raw_token)
+    project.token_last4 = raw_token[-4:]
+    await db.commit()
+    return ProjectTokenCreate(token=raw_token)
+
+
+@router.get("/{project_id}/token", response_model=ProjectTokenRead)
+async def read_project_token(
+    project_id: uuid.UUID,
+    user: User = Depends(current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> ProjectTokenRead:
+    project = await _get_owned_project(project_id, user, db)
+    if project.token_last4 is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="PROJECT_TOKEN_NOT_FOUND"
+        )
+    return ProjectTokenRead(masked_token=f"****{project.token_last4}")
