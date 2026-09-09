@@ -1,0 +1,23 @@
+{
+  "name": "testops-hub-playwright-reporter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Playwright reporter that posts a run's results to TestOps Hub in a single batch POST",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.40"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^22.9.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}
