@@ -3,7 +3,7 @@ from pathlib import Path
 
 os.environ.setdefault(
     "DATABASE_URL",
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/testops_hub_test",
+    "postgresql+asyncpg://postgres:postgres@localhost:5434/testops_hub_test",
 )
 
 import pytest
