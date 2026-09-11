@@ -58,3 +58,26 @@ export function currentUserHandler(validTokens: string[] = [TOKENS.access]) {
     return HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 })
   })
 }
+
+export const PROJECTS = [
+  { id: 'b7e6d5c4-1111-4a5b-8c9d-0123456789ab', name: 'Website QA', owner_id: CURRENT_USER.id },
+  { id: 'b7e6d5c4-2222-4a5b-8c9d-0123456789ab', name: 'Mobile App', owner_id: CURRENT_USER.id },
+]
+
+export function listProjectsHandler(projects: typeof PROJECTS = PROJECTS) {
+  return http.get(`${API_BASE_URL}/projects`, () => HttpResponse.json(projects))
+}
+
+/** A GET/POST /projects pair sharing one in-memory list, for tests that create a project and expect it to show up in a later list fetch. */
+export function projectsCrudHandlers(initialProjects: typeof PROJECTS = []) {
+  let projects = initialProjects
+  return [
+    http.get(`${API_BASE_URL}/projects`, () => HttpResponse.json(projects)),
+    http.post(`${API_BASE_URL}/projects`, async ({ request }) => {
+      const body = (await request.json()) as { name: string }
+      const created = { id: crypto.randomUUID(), name: body.name, owner_id: CURRENT_USER.id }
+      projects = [...projects, created]
+      return HttpResponse.json(created, { status: 201 })
+    }),
+  ]
+}

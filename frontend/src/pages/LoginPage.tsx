@@ -32,7 +32,7 @@ export function LoginPage() {
     setSubmitError(null)
     try {
       await login(values.email, values.password)
-      await navigate({ to: search.redirect ?? '/' })
+      await navigate({ to: search.redirect ?? '/projects' })
     } catch (error) {
       if (error instanceof InvalidCredentialsError) {
         setSubmitError(error.message)

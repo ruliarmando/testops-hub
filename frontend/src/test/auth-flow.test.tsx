@@ -17,6 +17,7 @@ import {
   TOKENS,
   VALID_CREDENTIALS,
   currentUserHandler,
+  listProjectsHandler,
   loginHandler,
   refreshFailsHandler,
   refreshHandler,
@@ -35,7 +36,7 @@ function renderApp(initialPath: string) {
 
 describe('login page', () => {
   it('navigates past /login on successful login', async () => {
-    server.use(loginHandler(), currentUserHandler([TOKENS.access]))
+    server.use(loginHandler(), currentUserHandler([TOKENS.access]), listProjectsHandler())
     const user = userEvent.setup()
     renderApp('/login')
 
@@ -44,7 +45,7 @@ describe('login page', () => {
     await user.click(screen.getByRole('button', { name: 'Log in' }))
 
     await waitFor(() => expect(screen.queryByRole('heading', { name: 'Log in' })).not.toBeInTheDocument())
-    expect(await screen.findByText(`Logged in as ${CURRENT_USER.email}`)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Projects' })).toBeInTheDocument()
   })
 
   it('shows an error and stays on /login for wrong credentials', async () => {
@@ -71,11 +72,11 @@ describe('route guarding', () => {
 
   it('restores the session from a stored refresh token across a page refresh', async () => {
     setStoredRefreshToken(TOKENS.refresh)
-    server.use(refreshHandler(TOKENS.refreshed), currentUserHandler([TOKENS.refreshed]))
+    server.use(refreshHandler(TOKENS.refreshed), currentUserHandler([TOKENS.refreshed]), listProjectsHandler())
 
     renderApp('/')
 
-    expect(await screen.findByText(`Logged in as ${CURRENT_USER.email}`)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Projects' })).toBeInTheDocument()
   })
 
   it('redirects to /login with a session-expired reason when the stored refresh token is no longer valid', async () => {
@@ -95,6 +96,7 @@ describe('authenticated API calls', () => {
     server.use(
       loginHandler(),
       refreshHandler(TOKENS.refreshed),
+      listProjectsHandler(),
       http.get(`${API_BASE_URL}/users/me`, ({ request }) => {
         const auth = request.headers.get('Authorization')
         if (auth === `Bearer ${TOKENS.access}`) {
@@ -111,7 +113,7 @@ describe('authenticated API calls', () => {
     const { router } = renderApp('/')
 
     await expect(apiFetch<CurrentUser>('/users/me')).resolves.toEqual(CURRENT_USER)
-    expect(router.state.location.pathname).toBe('/')
+    expect(router.state.location.pathname).toBe('/projects')
     expect(screen.queryByRole('heading', { name: 'Log in' })).not.toBeInTheDocument()
   })
 
@@ -119,6 +121,7 @@ describe('authenticated API calls', () => {
     let originalTokenUses = 0
     server.use(
       loginHandler(),
+      listProjectsHandler(),
       http.get(`${API_BASE_URL}/users/me`, ({ request }) => {
         const auth = request.headers.get('Authorization')
         if (auth === `Bearer ${TOKENS.access}`) {
@@ -144,7 +147,7 @@ describe('authenticated API calls', () => {
 
 describe('logout', () => {
   it('clears the session and returns to /login', async () => {
-    server.use(loginHandler(), currentUserHandler([TOKENS.access]))
+    server.use(loginHandler(), currentUserHandler([TOKENS.access]), listProjectsHandler())
     await login(VALID_CREDENTIALS.email, VALID_CREDENTIALS.password)
     const user = userEvent.setup()
     renderApp('/')

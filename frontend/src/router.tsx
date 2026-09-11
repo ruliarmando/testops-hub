@@ -3,6 +3,7 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  Link,
   Outlet,
   redirect,
   useNavigate,
@@ -12,8 +13,9 @@ import { z } from 'zod'
 import { Button } from '@/components/ui/button'
 import { ensureAuthenticated, hasStoredSession } from '@/lib/auth/store'
 import { useAuth } from '@/lib/auth/useAuth'
-import { DashboardPage } from '@/pages/DashboardPage'
 import { LoginPage } from '@/pages/LoginPage'
+import { ProjectDashboardPage } from '@/pages/ProjectDashboardPage'
+import { ProjectsPage } from '@/pages/ProjectsPage'
 
 const rootRoute = createRootRoute({
   component: RootLayout,
@@ -31,7 +33,14 @@ function RootLayout() {
   return (
     <div className="min-h-svh bg-background text-foreground">
       <header className="flex items-center justify-between border-b p-4">
-        <h1 className="text-lg font-semibold">TestOps Hub</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-lg font-semibold">TestOps Hub</h1>
+          {status === 'authenticated' && (
+            <Link to="/projects" className="text-sm text-muted-foreground hover:text-foreground">
+              Projects
+            </Link>
+          )}
+        </div>
         {status === 'authenticated' && (
           <Button variant="outline" size="sm" onClick={handleLogout}>
             Log out
@@ -78,10 +87,27 @@ const authenticatedLayoutRoute = createRoute({
 const indexRoute = createRoute({
   getParentRoute: () => authenticatedLayoutRoute,
   path: '/',
-  component: DashboardPage,
+  beforeLoad: () => {
+    throw redirect({ to: '/projects' })
+  },
 })
 
-const routeTree = rootRoute.addChildren([loginRoute, authenticatedLayoutRoute.addChildren([indexRoute])])
+const projectsRoute = createRoute({
+  getParentRoute: () => authenticatedLayoutRoute,
+  path: '/projects',
+  component: ProjectsPage,
+})
+
+const projectDashboardRoute = createRoute({
+  getParentRoute: () => authenticatedLayoutRoute,
+  path: '/projects/$projectId',
+  component: ProjectDashboardPage,
+})
+
+const routeTree = rootRoute.addChildren([
+  loginRoute,
+  authenticatedLayoutRoute.addChildren([indexRoute, projectsRoute, projectDashboardRoute]),
+])
 
 /** Used directly by main.tsx/App.tsx for the real app, and by tests to build an isolated router per test. */
 export function createAppRouter(history?: RouterHistory) {
