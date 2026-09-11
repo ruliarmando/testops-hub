@@ -56,6 +56,9 @@ serves on port `8000`), and the ARQ worker. Swagger docs are at http://localhost
 ### Run the backend locally
 
 ```bash
+python -m venv .venv
+.venv\Scripts\activate     # Windows (PowerShell); use `source .venv/bin/activate` on macOS/Linux
+
 cd backend
 cp .env.example .env   # adjust DATABASE_URL / REDIS_URL if not using Docker for those
 
