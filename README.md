@@ -13,22 +13,30 @@ for domain terminology.
 - **Backend**: FastAPI, async SQLAlchemy 2.0, PostgreSQL, Alembic migrations
 - **Auth**: [fastapi-users](https://fastapi-users.github.io/fastapi-users/) (register/login/JWT, dual-audience access + refresh tokens)
 - **Background jobs**: ARQ + Redis
+- **Frontend**: Vite + React + TypeScript dashboard (`frontend/`), Tailwind CSS + shadcn/ui, TanStack Router/Query
 - **Reporter**: a TypeScript Playwright reporter package (`packages/playwright-reporter`)
 
 ## Project layout
 
+Per [ADR-0001](docs/adr/0001-monorepo-layout.md), the repo splits into three top-level roots: the
+backend and frontend halves of the application, and `packages/` for things published for external
+use.
+
 ```
-app/                    FastAPI backend
-├── api/routes/         Route modules (auth, projects, runs, suites, cases, users, health)
-├── auth/               fastapi-users configuration
-├── core/                Settings (pydantic-settings, .env-driven)
-├── db/                  Async engine/session setup
-├── models/              SQLAlchemy models
-├── schemas/             Pydantic request/response schemas
-├── services/            Business logic (e.g. catalog auto-discovery)
-└── worker/              ARQ worker settings, queue, tasks
-alembic/                 DB migrations
-tests/                   pytest test suite
+backend/                FastAPI backend
+├── app/
+│   ├── api/routes/      Route modules (auth, projects, runs, suites, cases, users, health)
+│   ├── auth/            fastapi-users configuration
+│   ├── core/            Settings (pydantic-settings, .env-driven)
+│   ├── db/              Async engine/session setup
+│   ├── models/          SQLAlchemy models
+│   ├── schemas/         Pydantic request/response schemas
+│   ├── services/        Business logic (e.g. catalog auto-discovery)
+│   └── worker/          ARQ worker settings, queue, tasks
+├── alembic/             DB migrations
+├── tests/               pytest test suite
+└── pyproject.toml
+frontend/                Vite + React + TypeScript dashboard (see its own README)
 packages/playwright-reporter/   Standalone npm package (see its own README)
 docs/adr/                Architecture decision records
 docs/agents/             Docs for AI coding agents working in this repo
@@ -48,6 +56,7 @@ serves on port `8000`), and the ARQ worker. Swagger docs are at http://localhost
 ### Run the backend locally
 
 ```bash
+cd backend
 cp .env.example .env   # adjust DATABASE_URL / REDIS_URL if not using Docker for those
 
 pip install -e ".[dev]"
@@ -55,9 +64,21 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
+### Run the frontend locally
+
+The frontend runs directly on the host (not containerized) so Vite's HMR works at full speed
+against the already-Dockerized backend. See [frontend/README.md](frontend/README.md).
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
 ### Run tests
 
 ```bash
+cd backend
 pytest
 ```
 
