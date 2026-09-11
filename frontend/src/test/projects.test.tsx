@@ -13,6 +13,7 @@ import {
   VALID_CREDENTIALS,
   currentUserHandler,
   listProjectsHandler,
+  listRunsHandler,
   loginHandler,
   projectsCrudHandlers,
 } from '@/test/msw/handlers'
@@ -52,13 +53,13 @@ describe('projects list', () => {
   })
 
   it('clicking a project navigates to its dashboard route', async () => {
-    server.use(listProjectsHandler())
+    server.use(listProjectsHandler(), listRunsHandler(PROJECTS[0].id, []))
     const user = userEvent.setup()
     const { router } = await loginAndRenderProjects()
 
     await user.click(await screen.findByRole('link', { name: PROJECTS[0].name }))
 
-    expect(await screen.findByText(`Project ID: ${PROJECTS[0].id}`)).toBeInTheDocument()
+    expect(await screen.findByText('Project dashboard')).toBeInTheDocument()
     expect(router.state.location.pathname).toBe(`/projects/${PROJECTS[0].id}`)
   })
 })

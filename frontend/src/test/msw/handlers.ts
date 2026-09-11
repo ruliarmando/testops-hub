@@ -81,3 +81,25 @@ export function projectsCrudHandlers(initialProjects: typeof PROJECTS = []) {
     }),
   ]
 }
+
+export interface RunFixture {
+  id: string
+  project_id: string
+  created_at: string
+  run_metadata: Record<string, unknown> | null
+  pass_rate: number | null
+}
+
+export function makeRun(overrides: Partial<RunFixture> & Pick<RunFixture, 'created_at'>): RunFixture {
+  return {
+    id: crypto.randomUUID(),
+    project_id: PROJECTS[0].id,
+    run_metadata: null,
+    pass_rate: 100,
+    ...overrides,
+  }
+}
+
+export function listRunsHandler(projectId: string, runs: RunFixture[]) {
+  return http.get(`${API_BASE_URL}/projects/${projectId}/runs`, () => HttpResponse.json(runs))
+}

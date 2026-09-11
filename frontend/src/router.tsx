@@ -16,6 +16,7 @@ import { useAuth } from '@/lib/auth/useAuth'
 import { LoginPage } from '@/pages/LoginPage'
 import { ProjectDashboardPage } from '@/pages/ProjectDashboardPage'
 import { ProjectsPage } from '@/pages/ProjectsPage'
+import { RunDetailPage } from '@/pages/RunDetailPage'
 
 const rootRoute = createRootRoute({
   component: RootLayout,
@@ -104,9 +105,15 @@ const projectDashboardRoute = createRoute({
   component: ProjectDashboardPage,
 })
 
+const runDetailRoute = createRoute({
+  getParentRoute: () => authenticatedLayoutRoute,
+  path: '/projects/$projectId/runs/$runId',
+  component: RunDetailPage,
+})
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
-  authenticatedLayoutRoute.addChildren([indexRoute, projectsRoute, projectDashboardRoute]),
+  authenticatedLayoutRoute.addChildren([indexRoute, projectsRoute, projectDashboardRoute, runDetailRoute]),
 ])
 
 /** Used directly by main.tsx/App.tsx for the real app, and by tests to build an isolated router per test. */
